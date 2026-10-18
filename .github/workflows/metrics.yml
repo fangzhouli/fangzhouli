@@ -15,16 +15,40 @@ jobs:
   github-metrics:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: lowlighter/metrics@latest
         with:
           # PAT (classic, `repo` + `read:org` scopes) so private and org work is counted.
           token: ${{ secrets.METRICS_TOKEN }}
-          committer_token: ${{ secrets.GITHUB_TOKEN }}
           user: fangzhouli
           template: classic
-          base: header, activity, community, repositories
+          base: ""
           config_timezone: America/Los_Angeles
           plugin_isocalendar: yes
           plugin_isocalendar_duration: full-year
-          plugin_languages: yes
-          plugin_languages_limit: 8
+          output_action: none
+
+      # Metrics emits a fixed 480px SVG with no viewBox; adding one lets the README scale it up.
+      - name: Make SVG scalable
+        run: |
+          python3 - /metrics_renders/github-metrics.svg github-metrics.svg <<'PY'
+          import re, sys
+          from pathlib import Path
+          svg = Path(sys.argv[1]).read_text()
+          svg = re.sub(
+              r'<svg ([^>]*?)width="(\d+)" height="(\d+)"',
+              r'<svg \1width="\2" height="\3" viewBox="0 0 \2 \3"',
+              svg,
+              count=1,
+          )
+          Path(sys.argv[2]).write_text(svg)
+          PY
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add github-metrics.svg
+          git diff --cached --quiet || git commit -m "Update github-metrics.svg"
+          git push

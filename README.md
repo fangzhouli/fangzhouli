@@ -9,4 +9,4 @@ I build end-to-end **information retrieval, information extraction, and knowledg
 
 **Elsewhere** · [Homepage](https://fangzhouli.github.io/) · [Google Scholar](https://scholar.google.com/citations?user=KsLcNGoAAAAJ&hl=en) · [LinkedIn](https://www.linkedin.com/in/fangzhou-li-8a9359155/) · ✉️ [fangzhou.fang.li@gmail.com](mailto:fangzhou.fang.li@gmail.com)
 
-![GitHub metrics](./github-metrics.svg)
+<img src="./github-metrics.svg" alt="GitHub contributions" width="100%">
