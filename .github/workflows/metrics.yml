@@ -23,17 +23,28 @@ jobs:
           token: ${{ secrets.METRICS_TOKEN }}
           user: fangzhouli
           template: classic
-          base: activity
+          base: ""
           config_timezone: America/Los_Angeles
           plugin_isocalendar: yes
           plugin_isocalendar_duration: full-year
           output_action: none
 
+      - name: Fetch contribution total
+        id: total
+        env:
+          GH_TOKEN: ${{ secrets.METRICS_TOKEN }}
+        run: |
+          total=$(gh api graphql -f query='{user(login:"fangzhouli"){contributionsCollection{contributionCalendar{totalContributions}}}}' \
+            --jq '.data.user.contributionsCollection.contributionCalendar.totalContributions')
+          echo "value=$total" >> "$GITHUB_OUTPUT"
+
       # Metrics emits a fixed 480px SVG with no viewBox; adding one lets the README scale it up.
-      - name: Make SVG scalable
+      - name: Post-process SVG
+        env:
+          TOTAL: ${{ steps.total.outputs.value }}
         run: |
           python3 - /metrics_renders/github-metrics.svg github-metrics.svg <<'PY'
-          import re, sys
+          import os, re, sys
           from pathlib import Path
           svg = Path(sys.argv[1]).read_text()
           svg = re.sub(
@@ -42,6 +53,10 @@ jobs:
               svg,
               count=1,
           )
+          heading = "Contributions calendar"
+          if heading not in svg:
+              print(f"::warning::'{heading}' heading not found; total not shown")
+          svg = svg.replace(heading, f"{int(os.environ['TOTAL']):,} contributions in the last year", 1)
           Path(sys.argv[2]).write_text(svg)
           PY
 
